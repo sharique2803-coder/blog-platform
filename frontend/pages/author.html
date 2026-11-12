@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlogSpace – Author</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <nav class="navbar"><div class="nav-container">
+    <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib"></i> BlogSpace</a>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html">Home</a>
+      <span id="authLinks"><a href="login.html">Login</a><a href="register.html" class="btn-primary-sm">Sign Up</a></span>
+      <span id="userLinks" style="display:none;">
+        <a href="create-post.html"><i class="fas fa-plus"></i> Write</a>
+        <a href="notifications.html" class="notif-link"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></a>
+        <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+        <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i></a>
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
+      </span>
+    </div>
+    <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+  </div></nav>
+
+  <main class="container" style="padding-top:2rem;padding-bottom:4rem;max-width:900px;">
+    <div id="authorLoading" class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>
+    <div id="authorContent" style="display:none;">
+      <!-- Profile header -->
+      <div class="author-profile-card">
+        <div class="author-big-avatar" id="bigAvatar"></div>
+        <div class="author-profile-info">
+          <h1 id="authorUsername"></h1>
+          <p id="authorBio" class="profile-bio"></p>
+          <div class="author-stats-row">
+            <div class="stat"><span id="statPosts">0</span><label>Posts</label></div>
+            <div class="stat"><span id="statFollowers">0</span><label>Followers</label></div>
+            <div class="stat"><span id="statFollowing">0</span><label>Following</label></div>
+            <div class="stat"><span id="statViews">0</span><label>Views</label></div>
+          </div>
+          <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap;">
+            <button id="followBtn" class="btn-primary" style="display:none;"></button>
+            <span id="joinedDate" class="text-muted" style="align-self:center;font-size:.85rem;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Author's posts -->
+      <h2 style="margin:2rem 0 1rem;"><i class="fas fa-newspaper"></i> Posts by <span id="authorNameLabel"></span></h2>
+      <div class="posts-grid" id="authorPostsGrid"></div>
+    </div>
+    <div id="authorError" class="error-state" style="display:none;">
+      <i class="fas fa-user-slash"></i><h2>Author not found</h2>
+      <a href="../index.html" class="btn-primary">Go Home</a>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  const authorId = new URLSearchParams(window.location.search).get('id');
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!authorId) { showErr(); return; }
+    try {
+      const data = await AuthorAPI.getProfile(authorId);
+      renderProfile(data);
+    } catch { showErr(); }
+  });
+
+  function renderProfile({ author, stats, posts, isFollowing }) {
+    document.title = `BlogSpace – ${author.username}`;
+    document.getElementById('authorLoading').style.display = 'none';
+    document.getElementById('authorContent').style.display = 'block';
+
+    const initials = author.username.charAt(0).toUpperCase();
+    document.getElementById('bigAvatar').textContent       = initials;
+    document.getElementById('authorUsername').textContent  = author.username;
+    document.getElementById('authorBio').textContent       = author.bio || 'No bio yet.';
+    document.getElementById('authorNameLabel').textContent = author.username;
+    document.getElementById('statPosts').textContent       = stats.postCount;
+    document.getElementById('statFollowers').textContent   = stats.followerCount;
+    document.getElementById('statFollowing').textContent   = stats.followingCount;
+    document.getElementById('statViews').textContent       = stats.totalViews;
+    document.getElementById('joinedDate').textContent      = `Joined ${new Date(author.createdAt).toLocaleDateString('en-US',{month:'long',year:'numeric'})}`;
+
+    // Follow button
+    const me = getUser();
+    if (me && me.id !== author.id) {
+      const btn = document.getElementById('followBtn');
+      btn.style.display = 'inline-flex';
+      renderFollowBtn(btn, isFollowing);
+      btn.addEventListener('click', async () => {
+        try {
+          const data = await FollowAPI.toggle(author.id);
+          renderFollowBtn(btn, data.following);
+          const delta = data.following ? 1 : -1;
+          const el = document.getElementById('statFollowers');
+          el.textContent = parseInt(el.textContent||0) + delta;
+        } catch {}
+      });
+    }
+
+    // Posts grid
+    const grid = document.getElementById('authorPostsGrid');
+    if (!posts.length) { grid.innerHTML='<div class="empty-state"><i class="fas fa-feather-alt"></i><h3>No posts yet</h3></div>'; return; }
+    grid.innerHTML = posts.map(p => {
+      const excerpt = p.excerpt||(p.content||'').replace(/<[^>]+>/g,'').substring(0,150)+'…';
+      return `
+      <article class="post-card" onclick="window.location='post.html?id=${p.id}'">
+        ${p.coverImage?`<div class="card-cover"><img src="${p.coverImage}" alt="" loading="lazy"/></div>`:''}
+        <div class="card-body">
+          <div class="card-tags">${(p.tags||[]).slice(0,3).map(t=>`<span class="tag-chip-sm">#${t}</span>`).join('')}</div>
+          <h3 class="card-title">${escapeHtml(p.title)}</h3>
+          <p class="card-excerpt">${escapeHtml(excerpt)}</p>
+          <div class="card-footer">
+            <span class="text-muted" style="font-size:.8rem;"><i class="fas fa-clock"></i> ${p.readingTime||1}m · ${timeAgo(p.createdAt)}</span>
+            <span class="card-meta" style="display:flex;gap:.6rem;font-size:.78rem;color:var(--text-muted);">
+              <span><i class="fas fa-eye"></i> ${p.views||0}</span>
+              <span><i class="fas fa-heart"></i> ${(p.likes||[]).length}</span>
+            </span>
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+  }
+
+  function renderFollowBtn(btn, following) {
+    btn.innerHTML = following ? '<i class="fas fa-user-check"></i> Following' : '<i class="fas fa-user-plus"></i> Follow';
+    btn.className = following ? 'btn-outline' : 'btn-primary';
+  }
+
+  function showErr() {
+    document.getElementById('authorLoading').style.display = 'none';
+    document.getElementById('authorError').style.display   = 'block';
+  }
+  </script>
+</body></html>

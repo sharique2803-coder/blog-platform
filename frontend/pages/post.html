@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlogSpace – Post</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <!-- Reading progress bar -->
+  <div id="readProgressBar" class="read-progress-bar" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100"></div>
+
+  <a href="#post-main" class="skip-link">Skip to content</a>
+
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib" aria-hidden="true"></i> BlogSpace</a>
+      <div class="nav-links" id="navLinks">
+        <a href="../index.html">Home</a>
+        <a href="explore.html"><i class="fas fa-compass" aria-hidden="true"></i> Explore</a>
+        <span id="authLinks">
+          <a href="login.html">Login</a>
+          <a href="register.html" class="btn-primary-sm">Sign Up</a>
+        </span>
+        <span id="userLinks" style="display:none;">
+          <a href="create-post.html"><i class="fas fa-plus" aria-hidden="true"></i> Write</a>
+          <a href="notifications.html" class="notif-link" aria-label="Notifications">
+            <i class="fas fa-bell" aria-hidden="true"></i>
+            <span class="notif-badge" id="notifBadge" style="display:none;" aria-live="polite"></span>
+          </a>
+          <a href="dashboard.html"><i class="fas fa-user" aria-hidden="true"></i> <span id="navUsername"></span></a>
+          <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt" aria-hidden="true"></i></a>
+          <a href="#" id="logoutBtn" aria-label="Logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i></a>
+        </span>
+        <button id="themeToggle" class="btn-icon" aria-label="Toggle dark/light mode"><i class="fas fa-sun"></i></button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <div class="post-layout container" id="post-main">
+    <!-- TABLE OF CONTENTS (sidebar) -->
+    <aside class="toc-sidebar" id="tocContainer" style="display:none;" aria-label="Table of contents"></aside>
+
+    <main class="post-page">
+      <div id="postLoading" class="loading-spinner" aria-live="polite"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i> Loading...</div>
+
+      <article id="postContent" style="display:none;" aria-label="Blog post">
+        <div class="post-meta-top">
+          <a href="../index.html" class="back-link"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back</a>
+          <div class="post-actions-top" id="postActionsTop" style="display:none;">
+            <a href="#" id="editPostBtn" class="btn-outline-sm"><i class="fas fa-edit" aria-hidden="true"></i> Edit</a>
+            <button id="revisionsBtn" class="btn-outline-sm" style="display:none;"><i class="fas fa-history" aria-hidden="true"></i> Revisions</button>
+            <button id="deletePostBtn" class="btn-danger-sm"><i class="fas fa-trash" aria-hidden="true"></i> Delete</button>
+          </div>
+        </div>
+
+        <div class="post-cover" id="postCover" style="display:none;"><img id="coverImg" src="" alt="Post cover image"/></div>
+
+        <div class="post-tags" id="postTags" aria-label="Post tags"></div>
+        <h1 id="postTitle" class="post-title"></h1>
+
+        <div class="post-author-bar">
+          <a href="#" id="authorLink" class="author-link-wrap" aria-label="View author profile">
+            <div class="author-avatar" id="authorAvatar" aria-hidden="true"></div>
+            <div class="author-info">
+              <span id="authorName" class="author-name"></span>
+              <span id="postDate" class="post-date"></span>
+            </div>
+          </a>
+          <div id="authorBadges" class="author-badges-row"></div>
+          <div class="post-meta-pills">
+            <span class="meta-pill"><i class="fas fa-clock" aria-hidden="true"></i> <span id="readingTime">1</span> min read</span>
+            <span class="meta-pill"><i class="fas fa-eye" aria-hidden="true"></i> <span id="viewCount">0</span></span>
+          </div>
+          <button id="followAuthorBtn" class="btn-outline-sm" style="display:none;" aria-label="Follow author"></button>
+        </div>
+
+        <div id="postBody" class="post-body"></div>
+
+        <!-- Reactions -->
+        <div class="reactions-bar" id="reactionsBar" aria-label="Post reactions"></div>
+
+        <!-- Footer actions -->
+        <div class="post-footer-actions" role="group" aria-label="Post actions">
+          <button id="likeBtn" class="like-btn" aria-label="Like this post"><i class="fas fa-heart" aria-hidden="true"></i> <span id="likeBtnCount">0</span></button>
+          <button id="bookmarkBtn" class="bookmark-btn-lg" aria-label="Bookmark this post"><i class="far fa-bookmark" aria-hidden="true"></i> <span id="bookmarkLabel">Save</span></button>
+          <button id="readingListBtn" class="bookmark-btn-lg" aria-label="Add to reading list"><i class="fas fa-book" aria-hidden="true"></i> Read Later</button>
+          <div class="share-group" role="group" aria-label="Share post">
+            <span class="share-label"><i class="fas fa-share-alt" aria-hidden="true"></i> Share</span>
+            <button class="share-btn" id="shareTwitter" aria-label="Share on Twitter"><i class="fab fa-twitter" aria-hidden="true"></i></button>
+            <button class="share-btn" id="shareLinkedIn" aria-label="Share on LinkedIn"><i class="fab fa-linkedin" aria-hidden="true"></i></button>
+            <button class="share-btn" id="shareCopy" aria-label="Copy link"><i class="fas fa-link" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </article>
+
+      <div id="postError" class="error-state" style="display:none;" role="alert">
+        <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+        <h2>Post not found</h2>
+        <a href="../index.html" class="btn-primary">Go Home</a>
+      </div>
+
+      <!-- RELATED -->
+      <section class="related-section" id="relatedSection" style="display:none;" aria-label="Related posts">
+        <h3 class="section-title"><i class="fas fa-layer-group" aria-hidden="true"></i> Related Posts</h3>
+        <div class="related-grid" id="relatedGrid"></div>
+      </section>
+
+      <!-- COMMENTS -->
+      <section class="comments-section" id="commentsSection" style="display:none;" aria-label="Comments">
+        <div class="comments-header">
+          <h3><i class="fas fa-comments" aria-hidden="true"></i> Comments <span id="commentCountBadge" class="badge" aria-live="polite"></span></h3>
+          <div class="sort-controls" role="group" aria-label="Sort comments">
+            <button class="sort-btn active" data-sort="new" aria-pressed="true">Newest</button>
+            <button class="sort-btn" data-sort="top" aria-pressed="false">Top</button>
+          </div>
+        </div>
+        <div id="commentFormWrapper">
+          <form id="commentForm" class="comment-form" style="display:none;" aria-label="Add a comment">
+            <textarea id="commentInput" placeholder="Share your thoughts... use @username to mention someone" rows="3" maxlength="1000" aria-label="Comment text"></textarea>
+            <div class="comment-form-footer">
+              <span id="charCount" class="char-count" aria-live="polite">0 / 1000</span>
+              <button type="submit" class="btn-primary-sm">Post Comment</button>
+            </div>
+          </form>
+          <div id="loginPrompt" class="login-prompt" style="display:none;" role="note">
+            <i class="fas fa-lock" aria-hidden="true"></i> <a href="login.html">Log in</a> to comment.
+          </div>
+        </div>
+        <div id="commentsList" class="comments-list" role="list" aria-live="polite">
+          <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Delete modal -->
+  <div id="deleteModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+    <div class="modal">
+      <h3 id="deleteModalTitle"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> Delete Post?</h3>
+      <p>This action cannot be undone. All comments will be deleted too.</p>
+      <div class="modal-actions">
+        <button id="confirmDelete" class="btn-danger">Yes, Delete</button>
+        <button id="cancelDelete" class="btn-outline">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revisions modal -->
+  <div id="revisionsModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="revisionsModalTitle">
+    <div class="modal" style="max-width:580px;">
+      <h3 id="revisionsModalTitle"><i class="fas fa-history" aria-hidden="true"></i> Revision History</h3>
+      <p style="color:var(--text-muted);font-size:.88rem;margin-bottom:1rem;">Click Restore to revert to a previous version. Current content is saved automatically before restoring.</p>
+      <div id="revisionsList"></div>
+      <div class="modal-actions" style="margin-top:1rem;">
+        <button id="closeRevisions" class="btn-outline">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer" role="contentinfo"><p>&copy; 2026 BlogSpace.</p></footer>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/post.js"></script>
+</body>
+</html>

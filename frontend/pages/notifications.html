@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlogSpace – Notifications</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <nav class="navbar"><div class="nav-container">
+    <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib"></i> BlogSpace</a>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html">Home</a>
+      <span id="userLinks" style="display:none;">
+        <a href="create-post.html"><i class="fas fa-plus"></i> Write</a>
+        <a href="notifications.html" class="notif-link active"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></a>
+        <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+        <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i></a>
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
+      </span>
+      <span id="authLinks"><a href="login.html">Login</a></span>
+    </div>
+    <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+  </div></nav>
+
+  <main class="container" style="max-width:680px;padding-top:2rem;padding-bottom:4rem;">
+    <div class="page-header">
+      <h1><i class="fas fa-bell"></i> Notifications</h1>
+      <div style="display:flex;gap:.5rem;">
+        <button id="markAllBtn" class="btn-outline-sm"><i class="fas fa-check-double"></i> Mark all read</button>
+        <button id="clearAllBtn" class="btn-ghost"><i class="fas fa-trash"></i> Clear</button>
+      </div>
+    </div>
+    <div id="notifList"><div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div></div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!requireAuth()) return;
+    loadNotifs();
+    document.getElementById('markAllBtn').addEventListener('click', async () => {
+      await NotifAPI.markAll(); loadNotifs(); loadNotifCount();
+    });
+    document.getElementById('clearAllBtn').addEventListener('click', async () => {
+      if (!confirm('Clear all notifications?')) return;
+      await NotifAPI.clearAll(); loadNotifs(); loadNotifCount();
+    });
+  });
+
+  async function loadNotifs() {
+    const list = document.getElementById('notifList');
+    try {
+      const data = await NotifAPI.getAll();
+      if (!data.notifications.length) {
+        list.innerHTML='<div class="empty-state"><i class="fas fa-bell-slash"></i><h3>No notifications</h3><p>You\'re all caught up!</p></div>'; return;
+      }
+      list.innerHTML = data.notifications.map(n => `
+        <div class="notif-item${n.read?'':' unread'}" id="notif-${n.id}">
+          <div class="notif-icon ${n.type}"><i class="fas fa-${n.type==='comment'?'comment':n.type==='follow'?'user-plus':'bell'}"></i></div>
+          <div class="notif-body">
+            <p>${escapeHtml(n.message)}</p>
+            <span class="notif-time">${timeAgo(n.created_at)}</span>
+          </div>
+          ${n.link?`<a href="${n.link}" class="notif-link-btn btn-outline-sm">View</a>`:''}
+          ${!n.read?`<button class="btn-icon mark-read-btn" data-id="${n.id}" title="Mark read"><i class="fas fa-circle-dot"></i></button>`:''}
+        </div>`).join('');
+      document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await NotifAPI.markOne(btn.dataset.id);
+          document.getElementById(`notif-${btn.dataset.id}`)?.classList.remove('unread');
+          btn.remove(); loadNotifCount();
+        });
+      });
+    } catch(err) { list.innerHTML=`<p class="error-text">${err.message}</p>`; }
+  }
+  </script>
+</body></html>

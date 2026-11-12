@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>BlogSpace – Analytics</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib" aria-hidden="true"></i> BlogSpace</a>
+      <div class="nav-links" id="navLinks">
+        <a href="../index.html">Home</a>
+        <span id="userLinks" style="display:none;">
+          <a href="create-post.html"><i class="fas fa-plus"></i> Write</a>
+          <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+          <a href="analytics.html" class="active" aria-current="page"><i class="fas fa-chart-line"></i> Analytics</a>
+          <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i></a>
+          <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
+        </span>
+        <span id="authLinks"><a href="login.html">Login</a></span>
+        <button id="themeToggle" class="btn-icon" aria-label="Toggle theme"><i class="fas fa-sun"></i></button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <main id="main" class="container" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="page-header">
+      <h1><i class="fas fa-chart-line"></i> Analytics</h1>
+      <div>
+        <label for="daysSelect" class="sr-only">Time period</label>
+        <select id="daysSelect" class="form-select-sm" aria-label="Time period">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="analytics-stats" id="analyticsStats"></div>
+
+    <!-- Charts -->
+    <div class="analytics-charts">
+      <div class="chart-card">
+        <h3>Views over time</h3>
+        <canvas id="viewsChart" aria-label="Views over time chart" role="img"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Reactions over time</h3>
+        <canvas id="reactionsChart" aria-label="Reactions over time chart" role="img"></canvas>
+      </div>
+    </div>
+
+    <!-- Top posts -->
+    <div class="analytics-top">
+      <h3><i class="fas fa-trophy"></i> Your Top Posts</h3>
+      <div id="topPostsList"></div>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  let viewsChart=null, reactionsChart=null;
+
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    if (!requireAuth()) return;
+    loadAnalytics(30);
+    loadTopPosts();
+    document.getElementById('daysSelect').addEventListener('change', e=>{ loadAnalytics(+e.target.value); });
+  });
+
+  async function loadAnalytics(days){
+    try {
+      const data=await PostAPI.getAnalytics(days);
+      // Build day labels (last N days)
+      const labels=buildDateLabels(days);
+      // Group events by day
+      const viewsByDay={}, reactionsByDay={};
+      labels.forEach(d=>{ viewsByDay[d]=0; reactionsByDay[d]=0; });
+      (data.daily||[]).forEach(e=>{
+        if (viewsByDay[e.day]!==undefined){
+          if (e.event_type==='view')     viewsByDay[e.day]     +=e.count;
+          if (e.event_type==='reaction') reactionsByDay[e.day] +=e.count;
+        }
+      });
+      renderCharts(labels, Object.values(viewsByDay), Object.values(reactionsByDay));
+      // Stats
+      const totalViews=Object.values(viewsByDay).reduce((a,b)=>a+b,0);
+      const totalReacts=Object.values(reactionsByDay).reduce((a,b)=>a+b,0);
+      document.getElementById('analyticsStats').innerHTML=`
+        <div class="admin-stat-card"><i class="fas fa-eye"></i><div><span class="admin-stat-val">${data.totals?.views||0}</span><label>Total Views</label></div></div>
+        <div class="admin-stat-card"><i class="fas fa-chart-bar"></i><div><span class="admin-stat-val">${totalViews}</span><label>Views (period)</label></div></div>
+        <div class="admin-stat-card"><i class="fas fa-smile"></i><div><span class="admin-stat-val">${totalReacts}</span><label>Reactions (period)</label></div></div>
+        <div class="admin-stat-card"><i class="fas fa-newspaper"></i><div><span class="admin-stat-val">${data.totals?.posts||0}</span><label>Published Posts</label></div></div>`;
+    } catch(err){ console.error(err); }
+  }
+
+  function buildDateLabels(days){
+    const labels=[];
+    for (let i=days-1;i>=0;i--){
+      const d=new Date(Date.now()-i*86400000);
+      labels.push(d.toISOString().split('T')[0]);
+    }
+    return labels;
+  }
+
+  function renderCharts(labels, views, reactions){
+    const isDark=document.documentElement.getAttribute('data-theme')!=='light';
+    const gridColor=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.08)';
+    const textColor=isDark?'#8892a4':'#555';
+    const opts={ responsive:true, plugins:{ legend:{ labels:{ color:textColor } } },
+      scales:{ x:{ ticks:{ color:textColor }, grid:{ color:gridColor } },
+               y:{ ticks:{ color:textColor }, grid:{ color:gridColor }, beginAtZero:true } } };
+
+    if (viewsChart) viewsChart.destroy();
+    viewsChart=new Chart(document.getElementById('viewsChart'),{
+      type:'line', data:{ labels, datasets:[{ label:'Views', data:views,
+        borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,.15)', fill:true, tension:.35 }] }, options:opts });
+
+    if (reactionsChart) reactionsChart.destroy();
+    reactionsChart=new Chart(document.getElementById('reactionsChart'),{
+      type:'bar', data:{ labels, datasets:[{ label:'Reactions', data:reactions,
+        backgroundColor:'rgba(244,114,182,.6)', borderColor:'#f472b6', borderWidth:1 }] }, options:opts });
+  }
+
+  async function loadTopPosts(){
+    try {
+      const data=await PostAPI.getMy();
+      const sorted=data.posts.sort((a,b)=>b.views-a.views).slice(0,5);
+      const list=document.getElementById('topPostsList');
+      if (!sorted.length){ list.innerHTML='<p class="text-muted">No posts yet.</p>'; return; }
+      list.innerHTML=sorted.map((p,i)=>`
+        <div class="top-post-row">
+          <span class="top-post-rank">#${i+1}</span>
+          <a href="post.html?id=${p.id}" class="top-post-title">${escapeHtml(p.title)}</a>
+          <span class="top-post-views"><i class="fas fa-eye"></i> ${p.views||0}</span>
+          <span class="top-post-likes"><i class="fas fa-heart"></i> ${(p.likes||[]).length}</span>
+          <span class="top-post-comments"><i class="fas fa-comment"></i> ${p.commentCount||0}</span>
+        </div>`).join('');
+    } catch{}
+  }
+  </script>
+</body></html>

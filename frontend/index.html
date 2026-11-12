@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlogSpace – Home</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="alternate" type="application/rss+xml" title="BlogSpace RSS" href="/feed.xml" />
+</head>
+<body>
+  <a href="#main-posts" class="skip-link">Skip to content</a>
+
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo"><i class="fas fa-pen-nib" aria-hidden="true"></i> BlogSpace</a>
+      <div class="nav-links" id="navLinks" role="menubar">
+        <a href="index.html" class="active" aria-current="page">Home</a>
+        <a href="pages/explore.html"><i class="fas fa-compass" aria-hidden="true"></i> Explore</a>
+        <a href="pages/search.html"><i class="fas fa-search" aria-hidden="true"></i> Search</a>
+        <span id="authLinks">
+          <a href="pages/login.html">Login</a>
+          <a href="pages/register.html" class="btn-primary-sm">Sign Up</a>
+        </span>
+        <span id="userLinks" style="display:none;">
+          <a href="pages/create-post.html" aria-label="Write a new post"><i class="fas fa-plus" aria-hidden="true"></i> Write</a>
+          <a href="pages/reading-list.html" aria-label="Reading list"><i class="fas fa-book" aria-hidden="true"></i></a>
+          <a href="pages/bookmarks.html" aria-label="Saved posts"><i class="fas fa-bookmark" aria-hidden="true"></i></a>
+          <a href="pages/notifications.html" class="notif-link" aria-label="Notifications">
+            <i class="fas fa-bell" aria-hidden="true"></i>
+            <span class="notif-badge" id="notifBadge" style="display:none;" aria-live="polite"></span>
+          </a>
+          <a href="pages/analytics.html" aria-label="Analytics"><i class="fas fa-chart-line" aria-hidden="true"></i></a>
+          <a href="pages/dashboard.html"><i class="fas fa-user" aria-hidden="true"></i> <span id="navUsername"></span></a>
+          <a href="pages/admin.html" id="adminLink" style="display:none;" aria-label="Admin panel"><i class="fas fa-shield-alt" aria-hidden="true"></i></a>
+          <a href="#" id="logoutBtn" aria-label="Logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i></a>
+        </span>
+        <button id="themeToggle" class="btn-icon" aria-label="Toggle dark/light mode"><i class="fas fa-sun"></i></button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero" aria-label="Hero section">
+    <div class="hero-content">
+      <h1>Stories worth reading.</h1>
+      <p>Discover articles, tutorials, and insights written by people who care.</p>
+      <div class="hero-actions">
+        <a href="#main-posts" class="btn-primary">Explore Posts</a>
+        <a href="pages/register.html" class="btn-outline" id="heroStartWriting">Start Writing</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED -->
+  <section class="featured-section container" id="featuredSection" style="display:none;" aria-label="Featured posts">
+    <h2 class="section-title"><i class="fas fa-star" aria-hidden="true"></i> Featured</h2>
+    <div class="featured-grid" id="featuredGrid"></div>
+  </section>
+
+  <!-- TRENDING -->
+  <section class="trending-section container" aria-label="Trending posts">
+    <h2 class="section-title"><i class="fas fa-fire" aria-hidden="true"></i> Trending This Week</h2>
+    <div class="trending-list" id="trendingList" role="list">
+      <div class="loading-spinner" aria-label="Loading trending posts"><i class="fas fa-circle-notch fa-spin" aria-hidden="true"></i></div>
+    </div>
+  </section>
+
+  <!-- SEARCH & FILTER -->
+  <section class="search-section" id="posts" aria-label="Search and filter posts">
+    <div class="container">
+      <div class="search-bar" role="search">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <input type="search" id="searchInput" placeholder="Search posts..." aria-label="Search posts" />
+        <button id="searchBtn" class="btn-primary-sm">Search</button>
+        <button id="clearSearch" class="btn-ghost" style="display:none;" aria-label="Clear search">Clear</button>
+      </div>
+      <div class="category-filters" id="categoryFilters" role="group" aria-label="Category filters"></div>
+      <div class="tag-filters" id="tagFilters" role="group" aria-label="Tag filters"></div>
+    </div>
+  </section>
+
+  <!-- POSTS GRID with infinite scroll -->
+  <main class="container" id="main-posts">
+    <div class="posts-header">
+      <h2 id="postsHeading">Latest Posts</h2>
+      <span id="postsCount" class="posts-count" aria-live="polite"></span>
+    </div>
+    <div class="posts-grid" id="postsGrid" role="list" aria-label="Blog posts"></div>
+    <!-- Infinite scroll sentinel -->
+    <div id="scrollSentinel" style="height:1px;display:none;" aria-hidden="true"></div>
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <p>&copy; 2026 BlogSpace. Built with <i class="fas fa-heart" aria-hidden="true"></i> for sharing ideas.</p>
+    <p style="margin-top:.4rem;font-size:.8rem;">
+      <a href="/feed.xml" title="RSS Feed"><i class="fas fa-rss"></i> RSS</a> ·
+      <a href="/sitemap.xml" title="Sitemap"><i class="fas fa-sitemap"></i> Sitemap</a> ·
+      <a href="pages/explore.html"><i class="fas fa-compass"></i> Explore</a>
+    </p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

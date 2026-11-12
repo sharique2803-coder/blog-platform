@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlogSpace – Admin Panel</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <nav class="navbar"><div class="nav-container">
+    <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib"></i> BlogSpace</a>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html">Home</a>
+      <span id="userLinks" style="display:none;">
+        <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+        <a href="admin.html" id="adminLink" class="active"><i class="fas fa-shield-alt"></i> Admin</a>
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
+      </span>
+      <span id="authLinks"><a href="login.html">Login</a></span>
+    </div>
+    <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+  </div></nav>
+
+  <main class="container" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="page-header"><h1><i class="fas fa-shield-alt"></i> Admin Panel</h1></div>
+
+    <!-- Stats -->
+    <div class="admin-stats" id="adminStats"></div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="users"><i class="fas fa-users"></i> Users</button>
+      <button class="admin-tab" data-tab="posts"><i class="fas fa-newspaper"></i> Posts</button>
+      <button class="admin-tab" data-tab="reports"><i class="fas fa-flag"></i> Reports</button>
+    </div>
+
+    <div id="tabUsers"   class="admin-panel-tab"></div>
+    <div id="tabPosts"   class="admin-panel-tab" style="display:none;"></div>
+    <div id="tabReports" class="admin-panel-tab" style="display:none;"></div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!requireAdmin()) return;
+    loadStats();
+    loadUsers();
+    loadAdminPosts();
+    loadReports();
+    // Tabs
+    document.querySelectorAll('.admin-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.admin-panel-tab').forEach(t=>t.style.display='none');
+        document.getElementById(`tab${btn.dataset.tab.charAt(0).toUpperCase()+btn.dataset.tab.slice(1)}`).style.display='block';
+      });
+    });
+  });
+
+  async function loadStats() {
+    try {
+      const { stats } = await AdminAPI.getStats();
+      document.getElementById('adminStats').innerHTML = [
+        ['users','Users',stats.users,'fas fa-users'],
+        ['posts','Posts',stats.posts,'fas fa-newspaper'],
+        ['comments','Comments',stats.comments,'fas fa-comments'],
+        ['reports','Open Reports',stats.reports,'fas fa-flag'],
+        ['banned','Banned Users',stats.banned,'fas fa-ban'],
+        ['drafts','Drafts',stats.drafts,'fas fa-file-alt'],
+      ].map(([,,val,icon,label],i,arr)=>`
+        <div class="admin-stat-card">
+          <i class="${arr[i][3]}"></i>
+          <div><span class="admin-stat-val">${arr[i][2]}</span><label>${arr[i][1]}</label></div>
+        </div>`).join('');
+    } catch {}
+  }
+
+  async function loadUsers(page=1) {
+    const container = document.getElementById('tabUsers');
+    container.innerHTML = '<div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>';
+    try {
+      const data = await AdminAPI.getUsers(page);
+      container.innerHTML = `
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${data.users.map(u=>`
+                <tr id="urow-${u.id}">
+                  <td><a href="author.html?id=${u.id}" target="_blank">${escapeHtml(u.username)}</a></td>
+                  <td>${escapeHtml(u.email)}</td>
+                  <td><span class="role-badge ${u.role}">${u.role}</span></td>
+                  <td>${u.banned?'<span class="badge-danger">Banned</span>':'<span class="badge-green">Active</span>'}</td>
+                  <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td>
+                    <button class="btn-danger-sm" onclick="banUser('${u.id}',${u.banned})">${u.banned?'Unban':'Ban'}</button>
+                    ${u.role!=='admin'?`<button class="btn-outline-sm" onclick="makeAdmin('${u.id}')">Make Admin</button>`:''}
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${renderAdminPagination(data.pages, data.page, 'loadUsers')}`;
+    } catch(err) { container.innerHTML=`<p class="error-text">${err.message}</p>`; }
+  }
+
+  async function banUser(id, isBanned) {
+    try { const d = await AdminAPI.banUser(id); loadUsers(); }
+    catch(err) { alert(err.message); }
+  }
+
+  async function makeAdmin(id) {
+    if (!confirm('Make this user an admin?')) return;
+    try { await AdminAPI.setRole(id,'admin'); loadUsers(); }
+    catch(err) { alert(err.message); }
+  }
+
+  async function loadAdminPosts(page=1) {
+    const container = document.getElementById('tabPosts');
+    container.innerHTML = '<div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>';
+    try {
+      const data = await AdminAPI.getPosts(page);
+      container.innerHTML = `
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Title</th><th>Author</th><th>Status</th><th>Featured</th><th>Views</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${data.posts.map(p=>`
+                <tr id="prow-${p.id}">
+                  <td><a href="post.html?id=${p.id}" target="_blank">${escapeHtml(p.title)}</a></td>
+                  <td>${escapeHtml(p.author?.username||'?')}</td>
+                  <td>${p.published?'<span class="badge-green">Published</span>':'<span class="badge-grey">Draft</span>'}</td>
+                  <td>${p.featured?'<span class="badge-yellow"><i class="fas fa-star"></i> Yes</span>':'No'}</td>
+                  <td>${p.views}</td>
+                  <td>
+                    <button class="btn-outline-sm" onclick="featurePost('${p.id}')">${p.featured?'Unfeature':'Feature'}</button>
+                    <button class="btn-danger-sm" onclick="adminDeletePost('${p.id}')"><i class="fas fa-trash"></i></button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${renderAdminPagination(data.pages, data.page, 'loadAdminPosts')}`;
+    } catch(err) { container.innerHTML=`<p class="error-text">${err.message}</p>`; }
+  }
+
+  async function featurePost(id) {
+    try { await AdminAPI.toggleFeature(id); loadAdminPosts(); }
+    catch(err) { alert(err.message); }
+  }
+
+  async function adminDeletePost(id) {
+    if (!confirm('Delete this post?')) return;
+    try { await AdminAPI.deletePost(id); loadAdminPosts(); }
+    catch(err) { alert(err.message); }
+  }
+
+  async function loadReports() {
+    const container = document.getElementById('tabReports');
+    try {
+      const data = await AdminAPI.getReports();
+      if (!data.reports.length) { container.innerHTML='<div class="empty-state"><i class="fas fa-check-circle"></i><h3>No open reports</h3></div>'; return; }
+      container.innerHTML = `
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>Type</th><th>Target ID</th><th>Reason</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${data.reports.map(r=>`
+                <tr id="rrow-${r.id}">
+                  <td><span class="role-badge">${r.target_type}</span></td>
+                  <td><code>${r.target_id.substring(0,8)}…</code></td>
+                  <td>${escapeHtml(r.reason)}</td>
+                  <td>${r.resolved?'<span class="badge-green">Resolved</span>':'<span class="badge-danger">Open</span>'}</td>
+                  <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                  <td>${!r.resolved?`<button class="btn-outline-sm" onclick="resolveReport('${r.id}')">Resolve</button>`:''}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } catch(err) { container.innerHTML=`<p class="error-text">${err.message}</p>`; }
+  }
+
+  async function resolveReport(id) {
+    try { await AdminAPI.resolveReport(id); loadReports(); loadStats(); }
+    catch(err) { alert(err.message); }
+  }
+
+  function renderAdminPagination(pages, current, fnName) {
+    if (pages<=1) return '';
+    let html='<div class="pagination" style="margin-top:1rem;">';
+    for (let i=1;i<=pages;i++) html+=`<button onclick="${fnName}(${i})" class="page-btn${i===current?' active':''}">${i}</button>`;
+    return html+'</div>';
+  }
+  </script>
+</body></html>

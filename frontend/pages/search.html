@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>BlogSpace – Search</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib" aria-hidden="true"></i> BlogSpace</a>
+      <div class="nav-links" id="navLinks">
+        <a href="../index.html">Home</a>
+        <a href="search.html" class="active" aria-current="page"><i class="fas fa-search"></i> Search</a>
+        <a href="explore.html"><i class="fas fa-compass"></i> Explore</a>
+        <span id="authLinks"><a href="login.html">Login</a><a href="register.html" class="btn-primary-sm">Sign Up</a></span>
+        <span id="userLinks" style="display:none;">
+          <a href="create-post.html"><i class="fas fa-plus"></i> Write</a>
+          <a href="notifications.html" class="notif-link"><i class="fas fa-bell" aria-label="Notifications"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></a>
+          <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+          <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i></a>
+          <a href="#" id="logoutBtn" aria-label="Logout"><i class="fas fa-sign-out-alt"></i></a>
+        </span>
+        <button id="themeToggle" class="btn-icon" aria-label="Toggle dark/light mode"><i class="fas fa-sun"></i></button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <main id="main" class="container" style="padding-top:2rem;padding-bottom:4rem;">
+    <h1 class="page-title"><i class="fas fa-search"></i> Search Posts</h1>
+
+    <!-- Search form -->
+    <form id="searchForm" class="search-form-full" role="search" aria-label="Search posts">
+      <div class="search-row">
+        <div class="form-group" style="flex:1;">
+          <label for="q">Keywords</label>
+          <input type="search" id="q" placeholder="Search titles and content..." autocomplete="off"/>
+        </div>
+        <div class="form-group">
+          <label for="filterCategory">Category</label>
+          <select id="filterCategory"><option value="">All Categories</option></select>
+        </div>
+        <div class="form-group">
+          <label for="filterTag">Tag</label>
+          <input type="text" id="filterTag" placeholder="e.g. javascript"/>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="form-group">
+          <label for="dateFrom">From date</label>
+          <input type="date" id="dateFrom"/>
+        </div>
+        <div class="form-group">
+          <label for="dateTo">To date</label>
+          <input type="date" id="dateTo"/>
+        </div>
+        <div class="form-group" style="align-self:flex-end;">
+          <button type="submit" class="btn-primary"><i class="fas fa-search"></i> Search</button>
+          <button type="button" id="clearFilters" class="btn-outline" style="margin-left:.5rem;">Clear</button>
+        </div>
+      </div>
+    </form>
+
+    <div id="searchResults">
+      <div class="empty-state"><i class="fas fa-search"></i><h3>Enter a search term above</h3></div>
+    </div>
+    <div id="searchPagination" class="pagination"></div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  let sPage=1; const sLimit=10;
+
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    const params=new URLSearchParams(location.search);
+    if (params.get('q')) document.getElementById('q').value=params.get('q');
+    await loadCats();
+    if (params.get('q')) doSearch();
+    document.getElementById('searchForm').addEventListener('submit',e=>{ e.preventDefault(); sPage=1; doSearch(); });
+    document.getElementById('clearFilters').addEventListener('click',()=>{
+      document.getElementById('searchForm').reset(); sPage=1;
+      document.getElementById('searchResults').innerHTML='<div class="empty-state"><i class="fas fa-search"></i><h3>Enter a search term above</h3></div>';
+      document.getElementById('searchPagination').innerHTML='';
+    });
+  });
+
+  async function loadCats(){
+    const data=await PostAPI.getCategories();
+    const sel=document.getElementById('filterCategory');
+    data.categories.forEach(c=>{ const o=document.createElement('option'); o.value=c.slug; o.textContent=c.name; sel.appendChild(o); });
+  }
+
+  async function doSearch(){
+    const q=document.getElementById('q').value.trim();
+    const cat=document.getElementById('filterCategory').value;
+    const tag=document.getElementById('filterTag').value.trim();
+    const df=document.getElementById('dateFrom').value;
+    const dt=document.getElementById('dateTo').value;
+    const results=document.getElementById('searchResults');
+    results.innerHTML='<div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i> Searching...</div>';
+    try {
+      const params={ page:sPage, limit:sLimit };
+      if (q)   params.search=q;
+      if (cat) params.category=cat;
+      if (tag) params.tag=tag;
+      if (df)  params.dateFrom=df;
+      if (dt)  params.dateTo=dt;
+      history.replaceState(null,'',`?q=${encodeURIComponent(q)}`);
+      const data=await PostAPI.getAll(params);
+      if (!data.posts.length){ results.innerHTML='<div class="empty-state"><i class="fas fa-ghost"></i><h3>No results found</h3><p>Try different keywords or filters.</p></div>'; document.getElementById('searchPagination').innerHTML=''; return; }
+      results.innerHTML=`<p class="search-count">${data.total} result${data.total!==1?'s':''} found</p>`+
+        data.posts.map(p=>{
+          const a=p.author||{}; const initials=(a.username||'U').charAt(0).toUpperCase();
+          const excerpt=p.excerpt||(p.content||'').replace(/<[^>]+>/g,'').substring(0,200)+'…';
+          return `<article class="search-result-card" onclick="window.location='post.html?id=${p.id}'" role="article" tabindex="0" onkeydown="if(event.key==='Enter')window.location='post.html?id=${p.id}'">
+            <div class="src-left">${p.coverImage?`<img src="${p.coverImage}" alt="" class="src-thumb" loading="lazy"/>`:`<div class="src-thumb-placeholder"><i class="fas fa-file-alt"></i></div>`}</div>
+            <div class="src-body">
+              ${p.category?`<span class="cat-badge">${escapeHtml(p.category.name)}</span>`:''}
+              <h3>${escapeHtml(p.title)}</h3>
+              <p class="src-excerpt">${escapeHtml(excerpt)}</p>
+              <div class="src-meta">
+                <div class="avatar-sm">${initials}</div>
+                <span>${escapeHtml(a.username||'')}</span>
+                <span class="dot">·</span><span>${timeAgo(p.createdAt)}</span>
+                <span class="dot">·</span><span><i class="fas fa-clock"></i> ${p.readingTime||1}m</span>
+                <span class="dot">·</span><span><i class="fas fa-eye"></i> ${p.views||0}</span>
+                <span class="dot">·</span><span>${(p.tags||[]).slice(0,3).map(t=>`<span class="tag-chip-sm">#${t}</span>`).join('')}</span>
+              </div>
+            </div>
+          </article>`;
+        }).join('');
+      // Pagination
+      const pag=document.getElementById('searchPagination');
+      pag.innerHTML='';
+      for (let i=1;i<=data.pages;i++){
+        const b=document.createElement('button');
+        b.className='page-btn'+(i===sPage?' active':''); b.textContent=i;
+        b.addEventListener('click',()=>{ sPage=i; doSearch(); window.scrollTo(0,0); });
+        pag.appendChild(b);
+      }
+    } catch(err){ results.innerHTML=`<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>${err.message}</p></div>`; }
+  }
+  </script>
+</body></html>

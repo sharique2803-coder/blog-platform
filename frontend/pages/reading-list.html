@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>BlogSpace – Reading List</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib" aria-hidden="true"></i> BlogSpace</a>
+      <div class="nav-links" id="navLinks">
+        <a href="../index.html">Home</a>
+        <a href="reading-list.html" class="active" aria-current="page"><i class="fas fa-book"></i> Reading List</a>
+        <span id="authLinks"><a href="login.html">Login</a><a href="register.html" class="btn-primary-sm">Sign Up</a></span>
+        <span id="userLinks" style="display:none;">
+          <a href="create-post.html"><i class="fas fa-plus"></i> Write</a>
+          <a href="notifications.html" class="notif-link"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></a>
+          <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+          <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i></a>
+          <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
+        </span>
+        <button id="themeToggle" class="btn-icon" aria-label="Toggle theme"><i class="fas fa-sun"></i></button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <main id="main" class="container" style="padding-top:2rem;padding-bottom:4rem;max-width:800px;">
+    <div class="page-header">
+      <h1><i class="fas fa-book"></i> Reading List</h1>
+      <div style="display:flex;gap:.5rem;">
+        <button class="rl-tab active" data-filter="all">All</button>
+        <button class="rl-tab" data-filter="unread">Unread</button>
+        <button class="rl-tab" data-filter="read">Read</button>
+      </div>
+    </div>
+    <div id="rlList"><div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div></div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  let allItems=[], filter='all';
+
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    if (!requireAuth()) return;
+    await loadList();
+    document.querySelectorAll('.rl-tab').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.rl-tab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active'); filter=btn.dataset.filter; renderList();
+      });
+    });
+  });
+
+  async function loadList(){
+    try {
+      const data=await ReadingListAPI.getAll();
+      allItems=data.items||[];
+      renderList();
+    } catch(err){ document.getElementById('rlList').innerHTML=`<p class="error-text">${err.message}</p>`; }
+  }
+
+  function renderList(){
+    const list=document.getElementById('rlList');
+    const items=filter==='all' ? allItems : allItems.filter(i=>filter==='read'?i.read:!i.read);
+    if (!items.length){ list.innerHTML='<div class="empty-state"><i class="fas fa-book-open"></i><h3>Nothing here</h3><p>Add posts to your reading list from any post page.</p><a href="../index.html" class="btn-primary">Browse Posts</a></div>'; return; }
+    list.innerHTML=items.map(({post:p,read})=>{
+      const a=p.author||{}; const initials=(a.username||'U').charAt(0).toUpperCase();
+      const excerpt=p.excerpt||(p.content||'').replace(/<[^>]+>/g,'').substring(0,150)+'…';
+      return `<div class="rl-item${read?' read':''}">
+        ${p.coverImage?`<img src="${p.coverImage}" alt="" class="rl-thumb" loading="lazy"/>`:`<div class="rl-thumb-placeholder"><i class="fas fa-file-alt"></i></div>`}
+        <div class="rl-info">
+          <a href="post.html?id=${p.id}" class="rl-title">${escapeHtml(p.title)}</a>
+          <p class="rl-excerpt">${escapeHtml(excerpt)}</p>
+          <div class="rl-meta">
+            <div class="avatar-sm">${initials}</div>
+            ${escapeHtml(a.username||'')} · <i class="fas fa-clock"></i> ${p.readingTime||1}m
+            ${read?'<span class="badge-green"><i class="fas fa-check"></i> Read</span>':''}
+          </div>
+        </div>
+        <div class="rl-actions">
+          ${!read?`<button class="btn-outline-sm" onclick="markRead('${p.id}',this)"><i class="fas fa-check"></i> Mark read</button>`:''}
+          <button class="btn-ghost" onclick="removeFromList('${p.id}',this)" aria-label="Remove from list"><i class="fas fa-times"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function markRead(postId, btn){
+    await ReadingListAPI.markRead(postId);
+    allItems=allItems.map(i=>i.post.id===postId?{...i,read:true}:i);
+    renderList();
+  }
+  async function removeFromList(postId, btn){
+    await ReadingListAPI.toggle(postId);
+    allItems=allItems.filter(i=>i.post.id!==postId);
+    renderList();
+  }
+  </script>
+</body></html>

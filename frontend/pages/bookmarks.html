@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BlogSpace – Saved Posts</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <nav class="navbar"><div class="nav-container">
+    <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib"></i> BlogSpace</a>
+    <div class="nav-links" id="navLinks">
+      <a href="../index.html">Home</a>
+      <a href="bookmarks.html" class="active"><i class="fas fa-bookmark"></i> Saved</a>
+      <span id="userLinks" style="display:none;">
+        <a href="create-post.html"><i class="fas fa-plus"></i> Write</a>
+        <a href="notifications.html" class="notif-link"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></a>
+        <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+        <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i></a>
+        <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
+      </span>
+      <span id="authLinks"><a href="login.html">Login</a><a href="register.html" class="btn-primary-sm">Sign Up</a></span>
+    </div>
+    <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+  </div></nav>
+
+  <main class="container" style="padding-top:2rem;padding-bottom:4rem;">
+    <div class="page-header"><h1><i class="fas fa-bookmark"></i> Saved Posts</h1></div>
+    <div class="posts-grid" id="bookmarkGrid">
+      <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i></div>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!requireAuth()) return;
+    const grid = document.getElementById('bookmarkGrid');
+    try {
+      const data = await BookmarkAPI.getAll();
+      if (!data.posts.length) {
+        grid.innerHTML='<div class="empty-state"><i class="fas fa-bookmark"></i><h3>No saved posts</h3><p>Bookmark posts to read them later.</p><a href="../index.html" class="btn-primary">Browse Posts</a></div>'; return;
+      }
+      grid.innerHTML = data.posts.map(post => {
+        const author   = post.author||{};
+        const initials = (author.username||'U').charAt(0).toUpperCase();
+        const excerpt  = post.excerpt||(post.content||'').replace(/<[^>]+>/g,'').substring(0,150)+'…';
+        return `
+        <article class="post-card" onclick="window.location='post.html?id=${post.id}'">
+          ${post.coverImage?`<div class="card-cover"><img src="${post.coverImage}" alt="" loading="lazy"/></div>`:''}
+          <div class="card-body">
+            <div class="card-tags">${(post.tags||[]).slice(0,3).map(t=>`<span class="tag-chip-sm">#${t}</span>`).join('')}</div>
+            <h3 class="card-title">${escapeHtml(post.title)}</h3>
+            <p class="card-excerpt">${escapeHtml(excerpt)}</p>
+            <div class="card-footer">
+              <div class="card-author"><div class="avatar-sm">${initials}</div><span>${escapeHtml(author.username||'')}</span></div>
+              <button class="bookmark-btn-sm bookmarked" onclick="event.stopPropagation();removeBookmark(event,'${post.id}',this)"><i class="fas fa-bookmark"></i></button>
+            </div>
+          </div>
+        </article>`;
+      }).join('');
+    } catch(err) { grid.innerHTML=`<p class="error-text">${err.message}</p>`; }
+  });
+
+  async function removeBookmark(e, postId, btn) {
+    e.preventDefault();
+    try {
+      await BookmarkAPI.toggle(postId);
+      btn.closest('.post-card').remove();
+    } catch {}
+  }
+  </script>
+</body></html>

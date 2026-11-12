@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>BlogSpace – Explore</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib" aria-hidden="true"></i> BlogSpace</a>
+      <div class="nav-links" id="navLinks">
+        <a href="../index.html">Home</a>
+        <a href="search.html"><i class="fas fa-search"></i> Search</a>
+        <a href="explore.html" class="active" aria-current="page"><i class="fas fa-compass"></i> Explore</a>
+        <span id="authLinks"><a href="login.html">Login</a><a href="register.html" class="btn-primary-sm">Sign Up</a></span>
+        <span id="userLinks" style="display:none;">
+          <a href="create-post.html"><i class="fas fa-plus"></i> Write</a>
+          <a href="notifications.html" class="notif-link"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none;"></span></a>
+          <a href="dashboard.html"><i class="fas fa-user"></i> <span id="navUsername"></span></a>
+          <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt"></i></a>
+          <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></a>
+        </span>
+        <button id="themeToggle" class="btn-icon" aria-label="Toggle theme"><i class="fas fa-sun"></i></button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <main id="main" class="container" style="padding-top:2rem;padding-bottom:4rem;">
+    <h1 class="page-title"><i class="fas fa-compass"></i> Explore by Category</h1>
+    <p class="page-subtitle">Discover posts organised by topic</p>
+    <div id="exploreGrid" class="explore-grid">
+      <div class="loading-spinner"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script><script src="../js/auth.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    const grid=document.getElementById('exploreGrid');
+    try {
+      const data=await PostAPI.getExplore();
+      if (!data.categories.length){ grid.innerHTML='<div class="empty-state"><i class="fas fa-compass"></i><h3>No categories yet</h3></div>'; return; }
+      grid.innerHTML=data.categories.map(cat=>`
+        <section class="explore-category" aria-labelledby="cat-${cat.id}">
+          <div class="explore-cat-header">
+            <h2 id="cat-${cat.id}">${escapeHtml(cat.name)}</h2>
+            <span class="cat-count">${cat.postCount||0} posts</span>
+            <a href="search.html?category=${cat.slug}" class="btn-outline-sm">View all <i class="fas fa-arrow-right"></i></a>
+          </div>
+          <div class="explore-posts">
+            ${(cat.topPosts||[]).length
+              ? cat.topPosts.map(p=>{
+                  const a=p.author||{}; const initials=(a.username||'U').charAt(0).toUpperCase();
+                  return `<a href="post.html?id=${p.id}" class="explore-post-item">
+                    ${p.coverImage?`<img src="${p.coverImage}" alt="" loading="lazy"/>`:`<div class="explore-post-thumb-placeholder"><i class="fas fa-file-alt"></i></div>`}
+                    <div class="explore-post-info">
+                      <span class="explore-post-title">${escapeHtml(p.title)}</span>
+                      <span class="explore-post-meta">
+                        <div class="avatar-sm">${initials}</div>
+                        ${escapeHtml(a.username||'')} · <i class="fas fa-eye"></i> ${p.views||0} · <i class="fas fa-clock"></i> ${p.readingTime||1}m
+                      </span>
+                    </div>
+                  </a>`;
+                }).join('')
+              : '<p class="no-data">No posts in this category yet.</p>'}
+          </div>
+        </section>`).join('');
+    } catch(err){ grid.innerHTML=`<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>${err.message}</p></div>`; }
+  });
+  </script>
+</body></html>

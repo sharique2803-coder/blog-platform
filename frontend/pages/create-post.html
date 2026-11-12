@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlogSpace – Create Post</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Quill rich text editor -->
+  <link rel="stylesheet" href="https://cdn.quilljs.com/1.3.7/quill.snow.css"/>
+</head>
+<body>
+  <a href="#editor-main" class="skip-link">Skip to content</a>
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-container">
+      <a href="../index.html" class="nav-logo"><i class="fas fa-pen-nib" aria-hidden="true"></i> BlogSpace</a>
+      <div class="nav-links" id="navLinks">
+        <a href="../index.html">Home</a>
+        <span id="userLinks" style="display:none;">
+          <a href="dashboard.html"><i class="fas fa-user" aria-hidden="true"></i> <span id="navUsername"></span></a>
+          <a href="analytics.html"><i class="fas fa-chart-line" aria-hidden="true"></i></a>
+          <a href="admin.html" id="adminLink" style="display:none;"><i class="fas fa-shield-alt" aria-hidden="true"></i></a>
+          <a href="#" id="logoutBtn" aria-label="Logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i></a>
+        </span>
+        <button id="themeToggle" class="btn-icon" aria-label="Toggle dark/light mode"><i class="fas fa-sun"></i></button>
+      </div>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation"><i class="fas fa-bars"></i></button>
+    </div>
+  </nav>
+
+  <main class="container editor-page" id="editor-main">
+    <div class="editor-header">
+      <h1 id="editorTitle"><i class="fas fa-pen" aria-hidden="true"></i> Create New Post</h1>
+      <div class="editor-toolbar" style="display:flex;gap:.75rem;align-items:center;">
+        <span id="autoSaveStatus" class="autosave-status" aria-live="polite"></span>
+        <span id="scheduleStatus" class="autosave-status" style="color:var(--warning);" aria-live="polite"></span>
+        <button type="button" id="saveDraftBtn" class="btn-ghost" aria-label="Save draft now"><i class="fas fa-save" aria-hidden="true"></i> Save Draft</button>
+      </div>
+    </div>
+
+    <div id="alertBox" class="alert" style="display:none;" role="alert"></div>
+
+    <form id="postForm" class="post-form" aria-label="Create post form">
+      <div class="form-group">
+        <label for="title">Title <span class="required" aria-label="required">*</span></label>
+        <input type="text" id="title" placeholder="Give your post a compelling title..." maxlength="150" required aria-required="true" />
+        <span class="char-hint" id="titleCount" aria-live="polite">0 / 150</span>
+      </div>
+
+      <div class="form-group">
+        <label for="coverImage"><i class="fas fa-image" aria-hidden="true"></i> Cover Image URL <span class="optional">(optional)</span></label>
+        <input type="url" id="coverImage" placeholder="https://example.com/image.jpg" aria-label="Cover image URL"/>
+        <div id="coverPreview" class="cover-preview" style="display:none;">
+          <img id="coverPreviewImg" src="" alt="Cover image preview" />
+          <button type="button" id="removeCover" class="remove-cover" aria-label="Remove cover image"><i class="fas fa-times" aria-hidden="true"></i></button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="category"><i class="fas fa-folder" aria-hidden="true"></i> Category <span class="optional">(optional)</span></label>
+        <select id="category" aria-label="Post category">
+          <option value="">— Select a category —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="tags"><i class="fas fa-tags" aria-hidden="true"></i> Tags <span class="optional">(optional, comma-separated)</span></label>
+        <input type="text" id="tags" placeholder="javascript, webdev, tutorial" aria-label="Post tags, comma separated"/>
+        <div class="tag-preview" id="tagPreview" aria-live="polite"></div>
+      </div>
+
+      <!-- QUILL EDITOR -->
+      <div class="form-group">
+        <label>Content <span class="required" aria-label="required">*</span></label>
+        <div id="quillEditor" style="min-height:320px;" aria-label="Post content editor"></div>
+        <span class="char-hint" id="contentCount" aria-live="polite">0 characters</span>
+      </div>
+
+      <div class="form-group">
+        <label for="excerpt"><i class="fas fa-align-left" aria-hidden="true"></i> Excerpt <span class="optional">(auto-generated if blank)</span></label>
+        <textarea id="excerpt" rows="3" placeholder="A short summary of your post..." maxlength="300" aria-label="Post excerpt"></textarea>
+        <span class="char-hint" id="excerptCount" aria-live="polite">0 / 300</span>
+      </div>
+
+      <!-- Schedule & Publish -->
+      <div class="form-row">
+        <div class="form-group publish-toggle">
+          <label class="switch-label">
+            <input type="checkbox" id="published" checked aria-label="Publish immediately"/>
+            <span class="switch"></span>
+            Publish immediately
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="publishAt"><i class="fas fa-calendar" aria-hidden="true"></i> Schedule publish date <span class="optional">(optional)</span></label>
+          <input type="datetime-local" id="publishAt" aria-label="Schedule publish date"/>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" id="submitBtn" class="btn-primary"><i class="fas fa-paper-plane" aria-hidden="true"></i> <span id="submitLabel">Publish Post</span></button>
+      </div>
+    </form>
+  </main>
+
+  <footer class="footer" role="contentinfo"><p>&copy; 2026 BlogSpace.</p></footer>
+
+  <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/create-post.js"></script>
+</body>
+</html>

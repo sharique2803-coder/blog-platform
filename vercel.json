@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "buildCommand": "echo 'no build needed'",
+  "outputDirectory": "frontend",
+  "rewrites": [
+    { "source": "/api/auth/register",          "destination": "/api/auth/register" },
+    { "source": "/api/auth/login",             "destination": "/api/auth/login" },
+    { "source": "/api/auth/me",                "destination": "/api/auth/me" },
+    { "source": "/api/auth/profile",           "destination": "/api/auth/me" },
+
+    { "source": "/api/posts/categories",       "destination": "/api/posts/categories" },
+    { "source": "/api/posts/trending",         "destination": "/api/posts/trending" },
+    { "source": "/api/posts/featured",         "destination": "/api/posts/featured" },
+    { "source": "/api/posts/explore",          "destination": "/api/posts/explore" },
+    { "source": "/api/posts/analytics",        "destination": "/api/posts/analytics" },
+    { "source": "/api/posts/user/my",          "destination": "/api/posts/my" },
+    { "source": "/api/posts",                  "destination": "/api/posts/index" },
+    { "source": "/api/posts/:id/related",      "destination": "/api/posts/[id]?id=:id" },
+    { "source": "/api/posts/:id/revisions/:revId/restore", "destination": "/api/posts/[id]?id=:id&revId=:revId" },
+    { "source": "/api/posts/:id/revisions",    "destination": "/api/posts/[id]?id=:id" },
+    { "source": "/api/posts/:id/like",         "destination": "/api/posts/[id]?id=:id" },
+    { "source": "/api/posts/:id/react",        "destination": "/api/posts/[id]?id=:id" },
+    { "source": "/api/posts/:id",              "destination": "/api/posts/[id]?id=:id" },
+
+    { "source": "/api/comments/:postId/like",  "destination": "/api/comments/[postId]?postId=:postId" },
+    { "source": "/api/comments/:postId/vote",  "destination": "/api/comments/[postId]?postId=:postId" },
+    { "source": "/api/comments/:postId",       "destination": "/api/comments/[postId]?postId=:postId" },
+
+    { "source": "/api/notifications/read",     "destination": "/api/notifications/index" },
+    { "source": "/api/notifications/:id/read", "destination": "/api/notifications/[id]?id=:id" },
+    { "source": "/api/notifications",          "destination": "/api/notifications/index" },
+
+    { "source": "/api/bookmarks/:postId",      "destination": "/api/bookmarks/[postId]?postId=:postId" },
+    { "source": "/api/bookmarks",              "destination": "/api/bookmarks/index" },
+
+    { "source": "/api/reading-list/:postId/read", "destination": "/api/reading-list/[postId]?postId=:postId" },
+    { "source": "/api/reading-list/:postId",   "destination": "/api/reading-list/[postId]?postId=:postId" },
+    { "source": "/api/reading-list",           "destination": "/api/reading-list/index" },
+
+    { "source": "/api/follow/:userId/followers",  "destination": "/api/follow/[userId]?userId=:userId" },
+    { "source": "/api/follow/:userId/following",  "destination": "/api/follow/[userId]?userId=:userId" },
+    { "source": "/api/follow/:userId/status",     "destination": "/api/follow/[userId]?userId=:userId" },
+    { "source": "/api/follow/:userId",            "destination": "/api/follow/[userId]?userId=:userId" },
+
+    { "source": "/api/authors/:id",            "destination": "/api/authors/[id]?id=:id" },
+
+    { "source": "/api/admin/:path*",           "destination": "/api/admin/index" },
+    { "source": "/api/admin",                  "destination": "/api/admin/index" },
+
+    { "source": "/feed.xml",                   "destination": "/api/feed" },
+    { "source": "/sitemap.xml",                "destination": "/api/sitemap" }
+  ]
+}
